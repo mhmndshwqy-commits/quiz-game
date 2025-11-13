@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>🎯 لعبة اختبر معلوماتك - مستويات ووقت</title>
+<style>
+body {
+  text-align: center;
+  background: linear-gradient(to bottom, #caf0f8, #ffffff);
+  font-family: "Cairo", sans-serif;
+  direction: rtl;
+}
+h1 {
+  color: #0077b6;
+  margin-top: 20px;
+}
+#levelSelection, #quizBox {
+  background: #fff;
+  display: inline-block;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  margin-top: 30px;
+  width: 320px;
+}
+button {
+  display: block;
+  width: 220px;
+  margin: 10px auto;
+  padding: 10px;
+  font-size: 18px;
+  border-radius: 10px;
+  border: none;
+  background: #90e0ef;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover {
+  background: #48cae4;
+}
+#result, #score, #timer {
+  font-size: 22px;
+  margin-top: 15px;
+  font-weight: bold;
+}
+#nextBtn {
+  background: #00b4d8;
+  color: white;
+  display: none;
+}
+#endButtons button {
+  background: #0077b6;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<h1>🎯 لعبة اختبر معلوماتك 🎯</h1>
+
+<!-- شاشة اختيار المستوى -->
+<div id="levelSelection">
+  <h2>اختر المستوى:</h2>
+  <button onclick="startGame('easy')">سهل 🟢</button>
+  <button onclick="startGame('medium')">متوسط 🟡</button>
+  <button onclick="startGame('hard')">صعب 🔴</button>
+</div>
+
+<!-- شاشة الأسئلة -->
+<div id="quizBox" style="display:none;">
+  <h2 id="question"></h2>
+  <div id="answers"></div>
+  <p id="result"></p>
+  <button id="nextBtn" onclick="nextQuestion()">السؤال التالي ➡️</button>
+  <p id="score">النتيجة: 0</p>
+  <p id="timer">⏱ الوقت: 0 ثانية</p>
+</div>
+
+<script>
+const questions = {
+  easy: [
+    { q: "ما حاصل 2 + 2 ؟", answers: ["3", "4", "5"], correct: "4" },
+    { q: "لون السماء؟", answers: ["أخضر", "أزرق", "أحمر"], correct: "أزرق" },
+    { q: "ما عاصمة السعودية؟", answers: ["الرياض", "جدة", "مكة"], correct: "الرياض" }
+  ],
+  medium: [
+    { q: "كم عدد أرجل العنكبوت؟", answers: ["6", "8", "10"], correct: "8" },
+    { q: "ما هو ناتج 9 × 3 ؟", answers: ["27", "18", "36"], correct: "27" },
+    { q: "ما اسم كوكبنا؟", answers: ["المريخ", "الأرض", "الزهرة"], correct: "الأرض" }
+  ],
+  hard: [
+    { q: "من مخترع المصباح الكهربائي؟", answers: ["أينشتاين", "إديسون", "نيوتن"], correct: "إديسون" },
+    { q: "كم عدد قارات العالم؟", answers: ["5", "6", "7"], correct: "7" },
+    { q: "ما هو أسرع حيوان بري؟", answers: ["الفهد", "الأسد", "الحصان"], correct: "الفهد" }
+  ]
+};
+
+let level = "";
+let index = 0;
+let score = 0;
+let timer;
+let timeLeft = 0;
+
+// تحديد الوقت حسب المستوى
+function getLevelTime(lvl) {
+  if (lvl === "easy") return 40;
+  if (lvl === "medium") return 30;
+  if (lvl === "hard") return 20;
+  return 30;
+}
+
+// بدء اللعبة
+function startGame(selectedLevel) {
+  level = selectedLevel;
+  index = 0;
+  score = 0;
+  timeLeft = getLevelTime(level);
+  document.getElementById("levelSelection").style.display = "none";
+  document.getElementById("quizBox").style.display = "block";
+  document.getElementById("score").innerText = "النتيجة: 0";
+  loadQuestion();
+  startTimer();
+}
+
+// تحميل السؤال
+function loadQuestion() {
+  const q = questions[level][index];
+  document.getElementById("question").innerText = q.q;
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+  q.answers.forEach(ans => {
+    const btn = document.createElement("button");
+    btn.innerText = ans;
+    btn.onclick = () => checkAnswer(btn);
+    answersDiv.appendChild(btn);
+  });
+  document.getElementById("result").innerText = "";
+  document.getElementById("nextBtn").style.display = "none";
+}
+
+// التحقق من الإجابة
+function checkAnswer(btn) {
+  const correct = questions[level][index].correct;
+  if (btn.innerText === correct) {
+    document.getElementById("result").innerText = "أحسنت! ✅";
+    btn.style.background = "#80ed99";
+    score++;
+  } else {
+    document.getElementById("result").innerText = "إجابة خاطئة ❌";
+    btn.style.background = "#ff6b6b";
+  }
+  document.getElementById("score").innerText = "النتيجة: " + score;
+  document.querySelectorAll("#answers button").forEach(b => b.disabled = true);
+  document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+// السؤال التالي
+function nextQuestion() {
+  index++;
+  if (index < questions[level].length) {
+    loadQuestion();
+  } else {
+    endGame();
+  }
+}
+
+// عداد الوقت
+function startTimer() {
+  clearInterval(timer);
+  document.getElementById("timer").innerText = "⏱ الوقت: " + timeLeft + " ثانية";
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = "⏱ الوقت: " + timeLeft + " ثانية";
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      endGame();
+    }
+  }, 1000);
+}
+
+// نهاية اللعبة
+function endGame() {
+  clearInterval(timer);
+  document.getElementById("quizBox").innerHTML = `
+    <h2>🎉 انتهت اللعبة 🎉</h2>
+    <p>درجتك النهائية: ${score} من ${questions[level].length}</p>
+    <div id="endButtons">
+      <button onclick="restartGame()">🔁 إعادة اللعب</button>
+      <button onclick="backToLevels()">🏠 العودة للمستويات</button>
+    </div>
+  `;
+}
+
+// إعادة اللعب في نفس المستوى
+function restartGame() {
+  document.getElementById("quizBox").innerHTML = `
+    <h2 id="question"></h2>
+    <div id="answers"></div>
+    <p id="result"></p>
+    <button id="nextBtn" onclick="nextQuestion()">السؤال التالي ➡️</button>
+    <p id="score">النتيجة: 0</p>
+    <p id="timer">⏱ الوقت: 0 ثانية</p>
+  `;
+  startGame(level);
+}
+
+// الرجوع لشاشة المستويات
+function backToLevels() {
+  clearInterval(timer);
+  document.getElementById("quizBox").style.display = "none";
+  document.getElementById("levelSelection").style.display = "block";
+}
+</script>
+
+</body>
+</html>
